@@ -4,11 +4,17 @@ import imaplib
 import time
 import telebot
 import threading
+import configparser
 
 from peewee import SqliteDatabase, Model, AutoField, CharField
 
-tg_token = "6961540229:AAF2C0CmGbyQ4QFlcFyscv-4pVHzVuC-MQU"  # Вставь свой тг токен
-admin_id = 463821842  # сюда закинь свой telegram ID
+config = configparser.ConfigParser()
+config.read("settings.ini")
+
+
+tg_token = config["Credentials"]["tg_token"]
+admin_id = config["Credentials"]["admin_id"]
+
 
 bot = telebot.TeleBot(tg_token)
 
@@ -75,8 +81,8 @@ def get_users(message):
 
 
 def get_unseens_emails():
-    EMAIL_ACCOUNT = "amadeoqqq@outlook.com"
-    PASSWORD = "132213$Hhhh"
+    EMAIL_ACCOUNT = config["Credentials"]["EMAIL_ACCOUNT"]
+    PASSWORD = config["Credentials"]["PASSWORD"]
 
     mail = imaplib.IMAP4_SSL('outlook.office365.com')
     mail.login(EMAIL_ACCOUNT, PASSWORD)
