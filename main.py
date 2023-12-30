@@ -13,7 +13,7 @@ config.read("settings.ini")
 
 
 tg_token = config["Credentials"]["tg_token"]
-admin_id = config["Credentials"]["admin_id"]
+admin_id = int(config["Credentials"]["admin_id"])
 
 
 bot = telebot.TeleBot(tg_token)
@@ -72,15 +72,15 @@ def delete_user(message):
         bot.send_message(message.from_user.id, text=f"{message.text} - успешно удален")
 
 
+
 def get_users(message):
-    if message.from_user.id == admin_id:
-        user_list = []
-        for user in User.select():
-            user_list.append(user.user_tg_id)
-        bot.send_message(message.chat.id, text=str(user_list))
+    user_list = []
+    for user in User.select():
+        user_list.append(user.user_tg_id)
+    bot.send_message(message.chat.id, text=str(user_list))
 
 
-def get_unseens_emails():
+def send_emails():
     EMAIL_ACCOUNT = config["Credentials"]["EMAIL_ACCOUNT"]
     PASSWORD = config["Credentials"]["PASSWORD"]
 
@@ -112,26 +112,18 @@ def get_unseens_emails():
             if part.get_content_type() == "text/plain":
                 body = part.get_payload(decode=True)
                 data_list = [email_from, email_to, local_message_date, subject, body.decode('utf-8')]
-                return data_list
-
-
-def send_msg():
-    User.create_table()
-    data_list = get_unseens_emails()
-    for user in User.select():
-        if data_list is not None:
-            print(user.user_tg_id)
-            bot.send_message(user.user_tg_id, text=
-            f"From: {data_list[0]}\nTo: {data_list[1]}\nDate: {data_list[2]}\nSubject: {data_list[3]}\nMsg: {data_list[4]}"
-                             )
-        else:
-            bot.send_message(user.user_tg_id, text="нет писем")
-
-    time.sleep(1200)
+                for user in User.select():
+                    if data_list is not None:
+                        User.create_table()
+                        print(user.user_tg_id)
+                        bot.send_message(user.user_tg_id, text=
+                        f"From: {data_list[0]}\nTo: {data_list[1]}\nDate: {data_list[2]}\nSubject: {data_list[3]}\nMsg: {data_list[4]}"
+                                         )
+    time.sleep(300)
 
 
 if __name__ == "__main__":
     threading.Thread(target=poling_bot).start()
     while True:
-        send_msg()
+        send_emails()
 
