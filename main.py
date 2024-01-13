@@ -88,7 +88,7 @@ def send_emails():
     mail.login(EMAIL_ACCOUNT, PASSWORD)
     mail.list()
     mail.select('inbox')
-    result, data = mail.uid('search', None, "ALL")  # (ALL/UNSEEN)
+    result, data = mail.uid('search', None, "UNSEEN")  # (ALL/UNSEEN)
     i = len(data[0].split())
 
     for x in range(i):
@@ -119,7 +119,7 @@ def send_emails():
                         bot.send_message(user.user_tg_id, text=
                         f"From: {data_list[0]}\nTo: {data_list[1]}\nDate: {data_list[2]}\nSubject: {data_list[3]}\nMsg: {data_list[4]}"
                                          )
-    time.sleep(300)
+    time.sleep(20)
 
 
 if __name__ == "__main__":
