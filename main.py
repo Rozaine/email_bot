@@ -1,3 +1,4 @@
+import time
 import telebot
 import threading
 import configparser
@@ -12,6 +13,7 @@ User.create_table(User)
 
 tg_token = config["Credentials"]["tg_token"]
 admin_id = int(config["Credentials"]["admin_id"])
+chan_id = config["Credentials"]["chan_id"]
 
 bot = telebot.TeleBot(tg_token)
 
@@ -82,14 +84,21 @@ def get_users():
 
 
 def send_emails():
-    data_list = get_email()
+    data = get_email()
     for user in User.select():
-        if data_list is not None:
-            bot.send_message(user.user_tg_id, text=
-            f"From: {data_list[0]}\nTo: {data_list[1]}\n"
-            f"Date: {data_list[2]}\nSubject: {data_list[3]}\n"
-            f"Msg: {data_list[4]}")
+        if data is not None:
+            try:
+                if len(data) > 4096:
+                    for x in range(0, len(data), 4096):
+                        bot.send_message(user.user_tg_id, data[x:x + 4096])
+                else:
+                    bot.send_message(user.user_tg_id, text=data)
+            except telebot.apihelper.ApiTelegramException as exc:
+                print(exc)
+    time.sleep(10)
 
 
 if __name__ == "__main__":
     threading.Thread(target=poling_bot).start()
+    while True:
+        send_emails()

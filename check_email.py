@@ -1,7 +1,6 @@
 import datetime
 import email
 import imaplib
-import time
 import configparser
 
 config = configparser.ConfigParser()
@@ -9,7 +8,7 @@ config.read("settings.ini")
 
 
 def get_email():
-    EMAIL_ACCOUNT = config["Credentials"]["EMAIL_ACCOUNT"]
+    EMAIL_ACCOUNT = config["Credentials"]["EMAIL_LOGIN"]
     PASSWORD = config["Credentials"]["PASSWORD"]
 
     mail = imaplib.IMAP4_SSL('outlook.office365.com')
@@ -39,6 +38,8 @@ def get_email():
         for part in email_message.walk():
             if part.get_content_type() == "text/plain":
                 body = part.get_payload(decode=True)
-                data_list = [email_from, email_to, local_message_date, subject, body.decode('utf-8')]
-                return data_list
-    time.sleep(20)
+                data = (f"From: {email_from}\nTo: {email_to}\n"
+                        f"Time: {local_message_date}\nSubject: {subject}\n"
+                        f"Message: {body.decode('utf-8')}")
+                return data
+
