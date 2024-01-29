@@ -1,4 +1,6 @@
+import logging
 import time
+from datetime import datetime
 import telebot
 import threading
 import configparser
@@ -13,12 +15,17 @@ User.create_table(User)
 
 tg_token = config["Credentials"]["tg_token"]
 admin_id = int(config["Credentials"]["admin_id"])
-chan_id = config["Credentials"]["chan_id"]
-
+pause_time = int(config["Credentials"]["pause_time"])
 bot = telebot.TeleBot(tg_token)
+
+now = datetime.now().strftime("%d-%m-%Y-%H,%M,%S")
+logging.basicConfig(filename=f"logs/log_{now}.log", filemode="w", format="%(asctime)s %(levelname)s %(message)s",
+                    level=logging.DEBUG)
 
 
 def poling_bot():
+    logging.info("Bot start")
+
     @bot.message_handler(commands=['start'])
     def start_message(message):
         chat_id = message.chat.id
@@ -94,11 +101,14 @@ def send_emails():
                 else:
                     bot.send_message(user.user_tg_id, text=data)
             except telebot.apihelper.ApiTelegramException as exc:
-                print(exc)
-    time.sleep(10)
+                logging.warning(exc)
+    time.sleep(pause_time)
 
 
 if __name__ == "__main__":
-    threading.Thread(target=poling_bot).start()
-    while True:
-        send_emails()
+    try:
+        threading.Thread(target=poling_bot).start()
+        while True:
+            send_emails()
+    except:
+        logging.exception("bot_dead")
