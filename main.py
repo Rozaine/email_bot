@@ -10,6 +10,7 @@ from bd import User
 
 config = configparser.ConfigParser()
 config.read("settings.ini")
+last_msg_id = 0
 
 User.create_table(User)
 
@@ -20,7 +21,7 @@ bot = telebot.TeleBot(tg_token)
 
 now = datetime.now().strftime("%d-%m-%Y-%H,%M,%S")
 logging.basicConfig(filename=f"logs/log_{now}.log", filemode="w", format="%(asctime)s %(levelname)s %(message)s",
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 
 def poling_bot():
@@ -40,6 +41,7 @@ def poling_bot():
     def get_userid_message(message):
         bot.send_message(message.chat.id, "Enter user_id:")
         bot.register_next_step_handler(message, add_user)
+        logging.info("added user")
 
     @bot.message_handler(commands=['delete_user'])
     def get_userid_message(message):
@@ -48,6 +50,7 @@ def poling_bot():
         for user in users_list:
             keyboard.add(telebot.types.InlineKeyboardButton(text=user, callback_data=f"del_user;{user}"))
         bot.send_message(message.chat.id, "Choose user_id:", reply_markup=keyboard)
+        logging.info("deleted user")
 
     @bot.callback_query_handler(func=lambda call: True)
     def query_handler(call):
@@ -65,7 +68,7 @@ def poling_bot():
         else:
             bot.send_message(message.chat.id, text=", ".join(get_users()))
 
-    bot.infinity_polling()
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
 
 def add_user(message):
@@ -73,9 +76,9 @@ def add_user(message):
         try:
             if int(message.text):
                 User.create(user_tg_id=message.text)
-                bot.send_message(message.from_user.id, text=f"{message.text} - user added")
+                bot.send_message(message.chat.id, text=f"{message.text} - user added")
         except ValueError:
-            bot.send_message(message.from_user.id, text=f"{message.text} - error message type")
+            bot.send_message(message.chat.id, text=f"{message.text} - error message type")
 
 
 def delete_user(user_id):
@@ -91,17 +94,21 @@ def get_users():
 
 
 def send_emails():
+    global last_msg_id
     data = get_email()
-    for user in User.select():
-        if data is not None:
+    if data is not None and last_msg_id != data:
+        for user in User.select():
             try:
                 if len(data) > 4096:
                     for x in range(0, len(data), 4096):
                         bot.send_message(user.user_tg_id, data[x:x + 4096])
+                        last_msg_id = data
                 else:
                     bot.send_message(user.user_tg_id, text=data)
+                    last_msg_id = data
+                    print(user.user_tg_id)
             except telebot.apihelper.ApiTelegramException as exc:
-                logging.warning(exc)
+                logging.exception(exc)
     time.sleep(pause_time)
 
 
@@ -111,4 +118,4 @@ if __name__ == "__main__":
         while True:
             send_emails()
     except:
-        logging.exception("bot_dead")
+        logging.exception("stop")
