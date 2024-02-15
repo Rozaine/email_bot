@@ -68,6 +68,7 @@ def poling_bot():
         else:
             bot.send_message(message.chat.id, text=", ".join(get_users()))
 
+    bot.set_webhook()
     bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
 
